@@ -16,7 +16,7 @@ class Coord {
 public class EyeGaze implements UDPInput.Listener {
 	int width, height;
 	UDPInput udpInput;
-	static int vertMargin = 30; // upper and lower margin values in %
+	static int vertMargin =  12; // upper and lower margin values in %
 	static int horizMargin = 30; // right and left margin values in %
 	int leftMargin, rightMargin, upperMargin, lowerMargin;
 	private List<GazeListener> listeners = new ArrayList<GazeListener>();
@@ -27,16 +27,27 @@ public class EyeGaze implements UDPInput.Listener {
 		this.width = width;
 		this.height = height;
 		
-		leftMargin = width * horizMargin;
-		rightMargin = width - (width * horizMargin);
-		upperMargin = height * vertMargin;
-		lowerMargin = height - (height * vertMargin);
+		leftMargin  = (width * horizMargin) / 100;
+		rightMargin = width - (width * horizMargin) / 100;
+		upperMargin = (height * vertMargin) / 100;
+		lowerMargin = height - (height * vertMargin) / 100;
 	}
 	
+  public void read() {
+    udpInput.read();
+  }
+
+  public void pauseReading() {
+    udpInput.pauseReading();
+  }
+
+  public void close() {
+    udpInput.close();
+  }
+
 	public void handleGazeDataSet(UDPInput udpInput) {
 		int x = Math.round(Float.parseFloat(udpInput.getX()));
-		int y = Math.round(Float.parseFloat(udpInput.getX()));
-		/* filter gaze input */
+		int y = Math.round(Float.parseFloat(udpInput.getY()));
 		Coord coord = new Coord(x,y);
 		
 		if (coord.x < leftMargin ) {

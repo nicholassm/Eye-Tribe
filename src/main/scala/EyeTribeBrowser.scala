@@ -18,34 +18,34 @@ class EyeTribeBrowser extends Activity {
 
   val handler = new Handler
 
-  val doPageDown = new Runnable { 
+  val doScrollDown = new Runnable { 
     def run = {
       info("Scrolling down")
       info("y=" + webView.getScrollY)
-      webView.scrollTo(0, webView.getScrollY + SCROLL_STEP)
+      webView.scrollTo(webView.getScrollX, webView.getScrollY + SCROLL_STEP)
     }
   }
 
-  val doPageUp = new Runnable { 
+  val doScrollUp = new Runnable { 
     def run = {
       info("Scrolling up")
       info("y=" + webView.getScrollY)
-      webView.scrollTo(0, webView.getScrollY - SCROLL_STEP)
+      webView.scrollTo(webView.getScrollX, webView.getScrollY - SCROLL_STEP)
     }
   }
 
-  def scrollDown() = handler.post(doPageDown)
-  def scrollUp()   = handler.post(doPageUp)
+  private def scrollDown() = handler.post(doScrollDown)
+  private def scrollUp()   = handler.post(doScrollUp)
 
   val gazeListener = new EyeGaze.GazeListener {
 		def East(inertia: Int) {}
 		def West(inertia: Int) {}
-		def North(inertia: Int)     = scrollUp()
-		def NorthEast(inertia: Int) = scrollUp()
-		def NorthWest(inertia: Int) = scrollUp()
-		def South(inertia: Int)     = scrollDown()
-		def SouthEast(inertia: Int) = scrollDown()
-		def SouthWest(inertia: Int) = scrollDown()
+		def North(inertia: Int)     = { info("North");     scrollUp()   }
+		def NorthEast(inertia: Int) = { info("NorthEast"); scrollUp()   }
+		def NorthWest(inertia: Int) = { info("NorthWest"); scrollUp()   }
+		def South(inertia: Int)     = { info("South");     scrollDown() }
+		def SouthEast(inertia: Int) = { info("SouthEast"); scrollDown() }
+		def SouthWest(inertia: Int) = { info("SouthWest"); scrollDown() }
 		def Center() {}
 		def PageUp() {}
 		def PageDown() {}
@@ -55,16 +55,29 @@ class EyeTribeBrowser extends Activity {
 
   override def onCreate(savedInstanceState: Bundle) {
     super.onCreate(savedInstanceState)
+
     setContentView(R.layout.eyetribebrowser)
     webView = findViewById(R.id.eyetribebrowser).asInstanceOf[WebView]
     webView.setWebViewClient(new WebViewClient())
     val webSettings = webView.getSettings();
     webSettings.setJavaScriptEnabled(true);
 
+    info("Starting eyeGaze...")
     eyeGaze = new EyeGaze(webView.getWidth, webView.getHeight)
     eyeGaze.addListener(gazeListener)
+    eyeGaze.read()
 
+    info("Loading page")
     webView.loadUrl(TEST_PAGE)
+  }
+
+  override def onStop() {
+    eyeGaze.pauseReading()
+  }
+  
+  override def onDestroy() {
+    eyeGaze.pauseReading()
+    eyeGaze.close()
   }
 
   private def info(msg: String) {

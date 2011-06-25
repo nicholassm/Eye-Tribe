@@ -6,6 +6,7 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 import android.util.Log;
 
@@ -22,18 +23,26 @@ public class UDPInput{
 	private String y;
 	private String[] gazeData;
 
+  public static final String LOG_TAG = "EyeTribeBrowser";
+
 	public UDPInput(){
-			try {
-				socketToServer = new DatagramSocket(port);
-				thread.start();
-			} catch (SocketException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+    thread.start();
 	}
+
+  public void read() {
+    receiveMessage.read();
+  }
+	
+	public void pauseReading(){
+    receiveMessage.pauseReading();
+	}
+
+  public void close() {
+    receiveMessage.stop();
+  }
 	
 	public interface Listener {
-	    void handleGazeDataSet(UDPInput sender);
+	  void handleGazeDataSet(UDPInput sender);
 	}
 	
 	public String getGazeString(){
@@ -50,53 +59,80 @@ public class UDPInput{
 	
 	public void sendSignal(){
 		for (Listener listener : listeners) {
-            listener.handleGazeDataSet(this);
-        }
-	}
-	
-	public void disconnect(){
-		receiveMessage.isDone();
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		socketToServer.close();
+      listener.handleGazeDataSet(this);
+    }
 	}
 	
 	public class ReceiveMessage implements Runnable{
-		private boolean running = true;
-		
+		private volatile boolean running    = true;
+
+    private Semaphore readToken = new Semaphore(0);
+
 		public void run() {
-			
-			try{
-				while(running){
-	                  
-					DatagramPacket receivePacket = new DatagramPacket(byteArray, byteArray.length);
-	                socketToServer.receive(receivePacket);
-	                gazeString = new String(receivePacket.getData());
-	                gazeData = gazeString.split(" ");
-	                x = gazeData[2].replace(",", "."); 
-	                y = gazeData[3].replace(",", ".");
-	                sendSignal();
-				}
+		  while(running){
+        try {
+          readToken.acquire();
+          doRead();
+          readToken.release();
+        }
+        catch(InterruptedException e) {
+          // Do nothing.
+        }
 			} 
-      catch(IOException e){
-				e.printStackTrace();
-			}
 		}
-		
-		public void isDone(){
+
+    public void read() {
+      try {
+        if(socketToServer == null) {
+          socketToServer = new DatagramSocket(port);
+        }
+        readToken.release();
+      }
+      catch(SocketException e) {
+        e.printStackTrace();
+      }
+    }
+    
+    public void pauseReading() {
+      try {
+        readToken.acquire();
+      }
+      catch(InterruptedException e) {
+        // Do nothing.
+      }
+      if(socketToServer != null) {
+        socketToServer.close();
+        socketToServer = null;
+      }
+    }
+
+		public void stop(){
 			this.running = false;
 		}
+
+    private void doRead() {
+      try{
+        DatagramPacket receivePacket = new DatagramPacket(byteArray, byteArray.length);
+        Log.i(LOG_TAG, "About to block on receive.");
+        socketToServer.receive(receivePacket);
+        gazeString = new String(receivePacket.getData());
+        Log.i(LOG_TAG, "Received: " + gazeString);
+        gazeData = gazeString.split(" ");
+        x = gazeData[2].replace(",", "."); 
+        y = gazeData[3].replace(",", ".");
+        sendSignal();
+      }
+      catch(IOException e){
+        e.printStackTrace();
+      }
+    }
 	}
 	
-	  public void addListener(Listener listener) {
-		 this.listeners.add(listener);
-	  }
+	public void addListener(Listener listener) {
+	  this.listeners.add(listener);
+	}
 		 
-	  public void removeListener(Listener listener) {
-		 this.listeners.remove(listener);
-	  }
+	public void removeListener(Listener listener) {
+	  this.listeners.remove(listener);
+	}
 }
