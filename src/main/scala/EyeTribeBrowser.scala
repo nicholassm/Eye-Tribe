@@ -10,7 +10,48 @@ import _root_.android.util.Log
 class EyeTribeBrowser extends Activity {
   
   private var webView: WebView = null
-  private val LOG_TAG = "EyeTribeBrowser"
+  private val LOG_TAG     = "EyeTribeBrowser"
+  private val SCROLL_STEP = 50
+  private val TEST_PAGE   = "http://www.techcrunch.com"
+
+  private var eyeGaze: EyeGaze = null
+
+  val handler = new Handler
+
+  val doPageDown = new Runnable { 
+    def run = {
+      info("Scrolling down")
+      info("y=" + webView.getScrollY)
+      webView.scrollTo(0, webView.getScrollY + SCROLL_STEP)
+    }
+  }
+
+  val doPageUp = new Runnable { 
+    def run = {
+      info("Scrolling up")
+      info("y=" + webView.getScrollY)
+      webView.scrollTo(0, webView.getScrollY - SCROLL_STEP)
+    }
+  }
+
+  def scrollDown() = handler.post(doPageDown)
+  def scrollUp()   = handler.post(doPageUp)
+
+  val gazeListener = new EyeGaze.GazeListener {
+		def East(inertia: Int) {}
+		def West(inertia: Int) {}
+		def North(inertia: Int)     = scrollUp()
+		def NorthEast(inertia: Int) = scrollUp()
+		def NorthWest(inertia: Int) = scrollUp()
+		def South(inertia: Int)     = scrollDown()
+		def SouthEast(inertia: Int) = scrollDown()
+		def SouthWest(inertia: Int) = scrollDown()
+		def Center() {}
+		def PageUp() {}
+		def PageDown() {}
+		def Back() {}
+		def Dwell() {}
+  }
 
   override def onCreate(savedInstanceState: Bundle) {
     super.onCreate(savedInstanceState)
@@ -20,30 +61,13 @@ class EyeTribeBrowser extends Activity {
     val webSettings = webView.getSettings();
     webSettings.setJavaScriptEnabled(true);
 
-    webView.loadUrl("http://www.techcrunch.com")
+    eyeGaze = new EyeGaze(webView.getWidth, webView.getHeight)
+    eyeGaze.addListener(gazeListener)
 
-    var y = 0
-
-    val handler = new Handler
-    val doPageDown = new Runnable { 
-      def run = {
-        Log.i(LOG_TAG, "***** Doing page down")
-        Log.i(LOG_TAG, "***** y=" + webView.getScrollY)
-        y += 50
-        webView.scrollTo(0, y)
-      }
-    }
-    val doPageUp = new Runnable { 
-      def run = {
-        Log.i(LOG_TAG, "***** Doing page up")
-        Log.i(LOG_TAG, "***** y=" + webView.getScrollY)
-        y -= 50
-        webView.scrollTo(0, y)
-      }
-    }
-    for(i <- 1 to 10)
-      handler.postDelayed(doPageDown, i * 2000 + 20000)
+    webView.loadUrl(TEST_PAGE)
   }
 
-
+  private def info(msg: String) {
+    Log.i(LOG_TAG, "***** "+msg)
+  }
 }

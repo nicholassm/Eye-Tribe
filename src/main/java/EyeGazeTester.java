@@ -1,4 +1,4 @@
-package android.morten.itu.killergazegame;
+package com.eyetribe;
 
 import android.app.Activity;
 import android.content.Context;
@@ -8,13 +8,13 @@ import android.content.pm.ActivityInfo;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.morten.itu.killergazegame.MainActivity.GameLoop;
-import android.morten.itu.killergazegame.MainActivity.Panel;
 import android.os.Bundle;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.Window;
 import android.view.WindowManager;
+
+/*
 
 public class EyeGazeTester extends Activity {
 	
@@ -26,7 +26,6 @@ public class EyeGazeTester extends Activity {
     private TestLoop _thread;
 
 	
-    /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
@@ -223,4 +222,4 @@ public class EyeGazeTester extends Activity {
 		
     }
      
-}
+}*/
