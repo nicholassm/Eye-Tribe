@@ -3,15 +3,16 @@ package com.eyetribe
 import _root_.android.app.Activity
 import _root_.android.os.Bundle
 import _root_.android.os.Handler
-import _root_.android.widget.TextView
 import _root_.android.webkit._
 import _root_.android.util.Log
+import _root_.android.content.Context
+import _root_.android.view.WindowManager
 
 class EyeTribeBrowser extends Activity {
   
   private var webView: WebView = null
   private val LOG_TAG     = "EyeTribeBrowser"
-  private val SCROLL_STEP = 50
+  private val SCROLL_STEP = 5
   private val TEST_PAGE   = "http://www.techcrunch.com"
 
   private var eyeGaze: EyeGaze = null
@@ -46,7 +47,7 @@ class EyeTribeBrowser extends Activity {
 		def South(inertia: Int)     = { info("South");     scrollDown() }
 		def SouthEast(inertia: Int) = { info("SouthEast"); scrollDown() }
 		def SouthWest(inertia: Int) = { info("SouthWest"); scrollDown() }
-		def Center() {}
+		def Center() = { info("Center") }
 		def PageUp() {}
 		def PageDown() {}
 		def Back() {}
@@ -62,13 +63,21 @@ class EyeTribeBrowser extends Activity {
     val webSettings = webView.getSettings();
     webSettings.setJavaScriptEnabled(true);
 
-    info("Starting eyeGaze...")
-    eyeGaze = new EyeGaze(webView.getWidth, webView.getHeight)
-    eyeGaze.addListener(gazeListener)
-    eyeGaze.read()
-
     info("Loading page")
     webView.loadUrl(TEST_PAGE)
+
+    val display = getSystemService(Context.WINDOW_SERVICE).asInstanceOf[WindowManager].getDefaultDisplay(); 
+    val width  = display.getWidth(); 
+    val height = display.getHeight();
+   
+    info("Starting eyeGaze... (" + width + ", " + height + ")")
+    eyeGaze = new EyeGaze(width, height)
+    eyeGaze.addListener(gazeListener)
+    eyeGaze.read()
+  }
+
+  override def onPause() {
+    eyeGaze.pauseReading()
   }
 
   override def onStop() {

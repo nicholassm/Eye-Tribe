@@ -2,6 +2,7 @@ package com.eyetribe;
 
 import java.util.ArrayList;
 import java.util.List;
+import android.util.Log;
 
 class Coord {
 	public Coord(int _x, int _y) {
@@ -9,8 +10,12 @@ class Coord {
 		this.y = _y;
 	}
 	
-	public int x;
-	public int y;
+	public final int x;
+	public final int y;
+
+  public String toString() {
+    return "("+x+", "+y+")";
+  }
 }
 
 public class EyeGaze implements UDPInput.Listener {
@@ -45,33 +50,46 @@ public class EyeGaze implements UDPInput.Listener {
     udpInput.close();
   }
 
+  private Coord inputAsPortrait(Coord coord) {
+    return new Coord(width - coord.y, coord.x);
+  }
+
 	public void handleGazeDataSet(UDPInput udpInput) {
 		int x = Math.round(Float.parseFloat(udpInput.getX()));
 		int y = Math.round(Float.parseFloat(udpInput.getY()));
-		Coord coord = new Coord(x,y);
+    Coord coord = inputAsPortrait(new Coord(x, y));
+
+    Log.i(UDPInput.LOG_TAG, coord.toString());
 		
 		if (coord.x < leftMargin ) {
-			if (coord.y < upperMargin) {
+			if(coord.y < upperMargin) {
 				fireNorthWest(0);
-			} else if (coord.y > lowerMargin) {
+			} 
+      else if(coord.y > lowerMargin) {
 				fireSouthWest(0);
-			} else {
+			} 
+      else {
 				fireWest(0);
 			}
-		} else if (coord.x > rightMargin) {
-			if (coord.y < upperMargin) {
+		} 
+    else if(coord.x > rightMargin) {
+			if(coord.y < upperMargin) {
 				fireNorthEast(0);
-			} else if (coord.y > lowerMargin) {
+			} 
+      else if(coord.y > lowerMargin) {
 				fireSouthEast(0);
-			} else {
+			}
+      else {
 				fireEast(0);
 			}
 		} else {
-			if (coord.y < upperMargin) {
+			if(coord.y < upperMargin) {
 				fireNorth(0);
-			} else if (coord.y > lowerMargin) {
+			} 
+      else if(coord.y > lowerMargin) {
 				fireSouth(0);
-			} else {
+			} 
+      else {
 				fireCenter();
 			}
 		}

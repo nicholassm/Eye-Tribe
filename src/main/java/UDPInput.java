@@ -64,7 +64,8 @@ public class UDPInput{
 	}
 	
 	public class ReceiveMessage implements Runnable{
-		private volatile boolean running    = true;
+		private volatile boolean running = true;
+    private volatile boolean reading = false;
 
     private Semaphore readToken = new Semaphore(0);
 
@@ -82,27 +83,33 @@ public class UDPInput{
 		}
 
     public void read() {
-      try {
-        if(socketToServer == null) {
-          socketToServer = new DatagramSocket(port);
+      if(!reading) {
+        try {
+          if(socketToServer == null) {
+            socketToServer = new DatagramSocket(port);
+          }
+          readToken.release();
         }
-        readToken.release();
-      }
-      catch(SocketException e) {
-        e.printStackTrace();
+        catch(SocketException e) {
+          e.printStackTrace();
+        }
+        reading = true;
       }
     }
     
     public void pauseReading() {
-      try {
-        readToken.acquire();
-      }
-      catch(InterruptedException e) {
-        // Do nothing.
-      }
-      if(socketToServer != null) {
-        socketToServer.close();
-        socketToServer = null;
+      if(reading) {
+        try {
+          readToken.acquire();
+        }
+        catch(InterruptedException e) {
+          // Do nothing.
+        }
+        if(socketToServer != null) {
+          socketToServer.close();
+          socketToServer = null;
+        }
+        reading = false;
       }
     }
 
@@ -113,10 +120,8 @@ public class UDPInput{
     private void doRead() {
       try{
         DatagramPacket receivePacket = new DatagramPacket(byteArray, byteArray.length);
-        Log.i(LOG_TAG, "About to block on receive.");
         socketToServer.receive(receivePacket);
         gazeString = new String(receivePacket.getData());
-        Log.i(LOG_TAG, "Received: " + gazeString);
         gazeData = gazeString.split(" ");
         x = gazeData[2].replace(",", "."); 
         y = gazeData[3].replace(",", ".");
