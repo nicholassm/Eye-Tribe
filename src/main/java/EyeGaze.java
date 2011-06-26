@@ -4,26 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 import android.util.Log;
 
-class Coord {
-	public Coord(int _x, int _y) {
-		this.x = _x;
-		this.y = _y;
-	}
-	
-	public final int x;
-	public final int y;
-
-  public String toString() {
-    return "("+x+", "+y+")";
-  }
-}
-
 public class EyeGaze implements UDPInput.Listener {
-	int width, height;
+	public final int width;
+  public final int height;
 	UDPInput udpInput;
 	static int vertMargin =  12; // upper and lower margin values in %
 	static int horizMargin = 30; // right and left margin values in %
-	int leftMargin, rightMargin, upperMargin, lowerMargin;
+	public final int leftMargin;
+  public final int rightMargin;
+  public final int upperMargin;
+  public final int lowerMargin;
 	private List<GazeListener> listeners = new ArrayList<GazeListener>();
 	
 	public EyeGaze(int width, int height){
@@ -63,31 +53,31 @@ public class EyeGaze implements UDPInput.Listener {
 		
 		if (coord.x < leftMargin ) {
 			if(coord.y < upperMargin) {
-				fireNorthWest(0);
+				fireNorthWest(coord);
 			} 
       else if(coord.y > lowerMargin) {
-				fireSouthWest(0);
+				fireSouthWest(coord);
 			} 
       else {
-				fireWest(0);
+				fireWest(coord);
 			}
 		} 
     else if(coord.x > rightMargin) {
 			if(coord.y < upperMargin) {
-				fireNorthEast(0);
+				fireNorthEast(coord);
 			} 
       else if(coord.y > lowerMargin) {
-				fireSouthEast(0);
+				fireSouthEast(coord);
 			}
       else {
-				fireEast(0);
+				fireEast(coord);
 			}
 		} else {
 			if(coord.y < upperMargin) {
-				fireNorth(0);
+				fireNorth(coord);
 			} 
       else if(coord.y > lowerMargin) {
-				fireSouth(0);
+				fireSouth(coord);
 			} 
       else {
 				fireCenter();
@@ -95,103 +85,103 @@ public class EyeGaze implements UDPInput.Listener {
 		}
 	}
 
-	private void fireEast(int inertia) {
+	private void fireEast(Coord coord) {
 		for (GazeListener listener : listeners) {
-            listener.East(inertia);
-        }
+      listener.East(coord);
+    }
 	}
 	
-	private void fireWest(int inertia) {
+	private void fireWest(Coord coord) {
 		for (GazeListener listener : listeners) {
-            listener.West(inertia);
-        }
+      listener.West(coord);
+    }
 	}
 	
-	private void fireNorth(int inertia) {
+	private void fireNorth(Coord coord) {
 		for (GazeListener listener : listeners) {
-            listener.North(inertia);
-        }
+      listener.North(coord);
+    }
 	}
 	
-	private void fireSouth(int inertia) {
+	private void fireSouth(Coord coord) {
 		for (GazeListener listener : listeners) {
-            listener.South(inertia);
-        }
+      listener.South(coord);
+    }
 	}
 	
-	private void fireSouthWest(int inertia) {
+	private void fireSouthWest(Coord coord) {
 		for (GazeListener listener : listeners) {
-            listener.SouthWest(inertia);
-        }
+      listener.SouthWest(coord);
+    }
 	}
 	
-	private void fireNorthWest(int inertia) {
+	private void fireNorthWest(Coord coord) {
 		for (GazeListener listener : listeners) {
-            listener.NorthWest(inertia);
-        }
+      listener.NorthWest(coord);
+    }
 	}
 
-	private void fireNorthEast(int inertia) {
+	private void fireNorthEast(Coord coord) {
 		for (GazeListener listener : listeners) {
-            listener.NorthEast(inertia);
-        }
+      listener.NorthEast(coord);
+    }
 	}
 
-	private void fireSouthEast(int inertia) {
+	private void fireSouthEast(Coord coord) {
 		for (GazeListener listener : listeners) {
-            listener.SouthEast(inertia);
-        }
+      listener.SouthEast(coord);
+    }
 	}
 
 	private void fireCenter() {
 		for (GazeListener listener : listeners) {
-            listener.Center();
-        }
+      listener.Center();
+    }
 	}
 	
 	@SuppressWarnings("unused")
 	private void firePageUp() {
 		for (GazeListener listener : listeners) {
-            listener.PageUp();
-        }
+      listener.PageUp();
+    }
 	}
 
 	@SuppressWarnings("unused")
 	private void firePageDown() {
 		for (GazeListener listener : listeners) {
-            listener.PageDown();
-        }
+      listener.PageDown();
+    }
 	}
 	
 	@SuppressWarnings("unused")
 	private void fireBack() {
 		for (GazeListener listener : listeners) {
-            listener.Back();
-        }
+      listener.Back();
+    }
 	}
 	
 	@SuppressWarnings("unused")
 	private void fireDwell() {
 		for (GazeListener listener : listeners) {
-            listener.Dwell();
-        }
+      listener.Dwell();
+    }
 	}
 	
 	public interface GazeListener {
-		void East(int inertia);
-		void West(int inertia);
-		void North(int inertia);
-		void South(int inertia);
-		void NorthEast(int inertia);
-		void SouthEast(int inertia);
-		void NorthWest(int inertia);
-		void SouthWest(int intertia);
+		void East(Coord coord);
+		void West(Coord coord);
+		void North(Coord coord);
+		void South(Coord coord);
+		void NorthEast(Coord coord);
+		void SouthEast(Coord coord);
+		void NorthWest(Coord coord);
+		void SouthWest(Coord coord);
 		void Center();
 		void PageUp();
 		void PageDown();
 		void Back();
 		void Dwell();
-    }
+  }
 
 	  public void addListener(GazeListener listener) {
 		 this.listeners.add(listener);

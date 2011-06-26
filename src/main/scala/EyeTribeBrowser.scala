@@ -11,47 +11,52 @@ import _root_.android.view.WindowManager
 class EyeTribeBrowser extends Activity {
   
   private var webView: WebView = null
-  private val LOG_TAG     = "EyeTribeBrowser"
-  private val SCROLL_STEP = 5
-  private val TEST_PAGE   = "http://www.techcrunch.com"
+  private val LOG_TAG         = "EyeTribeBrowser"
+  private val MIN_SCROLL_STEP = 5
+  private val MAX_SCROLL_STEP = 15
+  private val TEST_PAGE       = "http://www.techcrunch.com"
 
   private var eyeGaze: EyeGaze = null
 
   val handler = new Handler
 
-  val doScrollDown = new Runnable { 
-    def run = {
-      info("Scrolling down")
-      info("y=" + webView.getScrollY)
-      webView.scrollTo(webView.getScrollX, webView.getScrollY + SCROLL_STEP)
-    }
+  private def scrollDown(amount: Int) {
+    handler.post(new Runnable { 
+      def run = {
+        info("Scrolling down")
+        info("y=" + webView.getScrollY)
+        webView.scrollTo(webView.getScrollX, webView.getScrollY + amount)
+      }
+    })
   }
 
-  val doScrollUp = new Runnable { 
-    def run = {
-      info("Scrolling up")
-      info("y=" + webView.getScrollY)
-      webView.scrollTo(webView.getScrollX, webView.getScrollY - SCROLL_STEP)
-    }
+  private def scrollUp(amount: Int) {
+    handler.post(new Runnable { 
+      def run = {
+        info("Scrolling up")
+        info("y=" + webView.getScrollY)
+        webView.scrollTo(webView.getScrollX, webView.getScrollY - amount)
+      }
+    })
   }
 
-  private def scrollDown() = handler.post(doScrollDown)
-  private def scrollUp()   = handler.post(doScrollUp)
+  private def calcNorthSpeed(coord: Coord) = (if(coord.x < 0) 0 else coord.x) * (MAX_SCROLL_STEP - MIN_SCROLL_STEP) / eyeGaze.upperMargin + MIN_SCROLL_STEP
+  private def calcSouthSpeed(coord: Coord) = (eyeGaze.height - (if(coord.y > eyeGaze.height) eyeGaze.height else coord.y)) * (MAX_SCROLL_STEP - MIN_SCROLL_STEP) / eyeGaze.lowerMargin + MIN_SCROLL_STEP
 
   val gazeListener = new EyeGaze.GazeListener {
-		def East(inertia: Int) {}
-		def West(inertia: Int) {}
-		def North(inertia: Int)     = { info("North");     scrollUp()   }
-		def NorthEast(inertia: Int) = { info("NorthEast"); scrollUp()   }
-		def NorthWest(inertia: Int) = { info("NorthWest"); scrollUp()   }
-		def South(inertia: Int)     = { info("South");     scrollDown() }
-		def SouthEast(inertia: Int) = { info("SouthEast"); scrollDown() }
-		def SouthWest(inertia: Int) = { info("SouthWest"); scrollDown() }
+		def East(coord: Coord) {}
+		def West(coord: Coord) {}
+		def North(coord: Coord)     = { info("North");     scrollUp(calcNorthSpeed(coord))   }
+		def NorthEast(coord: Coord) = { info("NorthEast"); scrollUp(calcNorthSpeed(coord))   }
+		def NorthWest(coord: Coord) = { info("NorthWest"); scrollUp(calcNorthSpeed(coord))   }
+		def South(coord: Coord)     = { info("South");     scrollDown(calcSouthSpeed(coord)) }
+		def SouthEast(coord: Coord) = { info("SouthEast"); scrollDown(calcSouthSpeed(coord)) }
+		def SouthWest(coord: Coord) = { info("SouthWest"); scrollDown(calcSouthSpeed(coord)) }
 		def Center() = { info("Center") }
-		def PageUp() {}
+		def PageUp()   {}
 		def PageDown() {}
-		def Back() {}
-		def Dwell() {}
+		def Back()     {}
+		def Dwell()    {}
   }
 
   override def onCreate(savedInstanceState: Bundle) {
