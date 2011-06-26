@@ -86,6 +86,7 @@ public class UDPInput{
       if(!reading) {
         try {
           if(socketToServer == null) {
+            Log.i(LOG_TAG, "Creating datagram socket.");
             socketToServer = new DatagramSocket(port);
           }
           readToken.release();
@@ -106,6 +107,7 @@ public class UDPInput{
           // Do nothing.
         }
         if(socketToServer != null) {
+          Log.i(LOG_TAG, "Closing datagram socket.");
           socketToServer.close();
           socketToServer = null;
         }

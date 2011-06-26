@@ -23,7 +23,7 @@ class EyeTribeBrowser extends Activity {
   private def scrollDown(amount: Int) {
     handler.post(new Runnable { 
       def run = {
-        info("Scrolling down")
+        info("Scrolling down " + amount + "px Now y=" + webView.getScrollY)
         info("y=" + webView.getScrollY)
         webView.scrollTo(webView.getScrollX, webView.getScrollY + amount)
       }
@@ -33,15 +33,21 @@ class EyeTribeBrowser extends Activity {
   private def scrollUp(amount: Int) {
     handler.post(new Runnable { 
       def run = {
-        info("Scrolling up")
-        info("y=" + webView.getScrollY)
+        info("Scrolling up " + amount + "px. Now y=" + webView.getScrollY)
         webView.scrollTo(webView.getScrollX, webView.getScrollY - amount)
       }
     })
   }
 
-  private def calcNorthSpeed(coord: Coord) = (if(coord.x < 0) 0 else coord.x) * (MAX_SCROLL_STEP - MIN_SCROLL_STEP) / eyeGaze.upperMargin + MIN_SCROLL_STEP
-  private def calcSouthSpeed(coord: Coord) = (eyeGaze.height - (if(coord.y > eyeGaze.height) eyeGaze.height else coord.y)) * (MAX_SCROLL_STEP - MIN_SCROLL_STEP) / eyeGaze.lowerMargin + MIN_SCROLL_STEP
+  private def calcNorthSpeed(coord: Coord): Int = {
+    val y = if(coord.y < 0) 0 else coord.y
+    (eyeGaze.upperMargin - y) * (MAX_SCROLL_STEP - MIN_SCROLL_STEP) / eyeGaze.upperMargin + MIN_SCROLL_STEP
+  }
+
+  private def calcSouthSpeed(coord: Coord): Int = {
+    val y = if(coord.y > eyeGaze.height) eyeGaze.height else coord.y
+    (eyeGaze.height - y) * (MAX_SCROLL_STEP - MIN_SCROLL_STEP) / eyeGaze.lowerMargin + MIN_SCROLL_STEP
+  }
 
   val gazeListener = new EyeGaze.GazeListener {
 		def East(coord: Coord) {}
