@@ -14,7 +14,7 @@ class EyeTribeBrowser extends Activity {
   private val LOG_TAG               = "EyeTribeBrowser"
   private val MIN_SCROLL_STEP       = 5
   private val MAX_SCROLL_STEP       = 15
-  private val TEST_PAGE             = "http://www.techcrunch.com"
+  private val TEST_PAGE             = "http://www.cnn.com"
   private val MAX_SCREEN_BRIGHTNESS = 255
   private val MIN_SCREEN_BRIGHTNESS = 0 
 
@@ -74,23 +74,25 @@ class EyeTribeBrowser extends Activity {
   def setScreenBrightness(value: Int) {
     handler.post(new Runnable {
       def run {
-        if(value == MAX_SCREEN_BRIGHTNESS) {
+        if(value == MAX_SCREEN_BRIGHTNESS)
           maxBrightness()
-        }
-        else {
-          val oldValue = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.SCREEN_BRIGHTNESS)
-
-          val newValue = Math.max(oldValue - 20, 0)
-          info("Changing screen brightness from " + oldValue +  " to " + newValue)
-
-          android.provider.Settings.System.putInt(getContentResolver(), android.provider.Settings.System.SCREEN_BRIGHTNESS, newValue)
-
-          val lp = getWindow.getAttributes
-          lp.screenBrightness = 1.0f * newValue / 255f
-          getWindow.setAttributes(lp)
-        }
+        else
+          dimBrightness()
       }
     })
+  }
+
+  private def dimBrightness() {
+    val oldValue = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.SCREEN_BRIGHTNESS)
+
+    val newValue = Math.max(oldValue - 20, 0)
+    info("Changing screen brightness from " + oldValue +  " to " + newValue)
+
+    android.provider.Settings.System.putInt(getContentResolver(), android.provider.Settings.System.SCREEN_BRIGHTNESS, newValue)
+
+    val lp = getWindow.getAttributes
+    lp.screenBrightness = 1.0f * newValue / 255f
+    getWindow.setAttributes(lp)
   }
 
   private def maxBrightness() {
