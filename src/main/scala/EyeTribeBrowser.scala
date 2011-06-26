@@ -10,11 +10,13 @@ import _root_.android.view.WindowManager
 
 class EyeTribeBrowser extends Activity {
   
-  private var webView: WebView = null
-  private val LOG_TAG         = "EyeTribeBrowser"
-  private val MIN_SCROLL_STEP = 5
-  private val MAX_SCROLL_STEP = 15
-  private val TEST_PAGE       = "http://www.techcrunch.com"
+  private var webView: WebView      = null
+  private val LOG_TAG               = "EyeTribeBrowser"
+  private val MIN_SCROLL_STEP       = 5
+  private val MAX_SCROLL_STEP       = 15
+  private val TEST_PAGE             = "http://www.techcrunch.com"
+  private val MAX_SCREEN_BRIGHTNESS = 255
+  private val MIN_SCREEN_BRIGHTNESS = 0 
 
   private var eyeGaze: EyeGaze = null
 
@@ -33,8 +35,11 @@ class EyeTribeBrowser extends Activity {
   private def scrollUp(amount: Int) {
     handler.post(new Runnable { 
       def run = {
-        info("Scrolling up " + amount + "px. Now y=" + webView.getScrollY)
-        webView.scrollTo(webView.getScrollX, webView.getScrollY - amount)
+        val currentY = webView.getScrollY
+        if(currentY - amount > 0) {
+          info("Scrolling up " + amount + "px. Now y=" + currentY)
+          webView.scrollTo(webView.getScrollX, currentY - amount)
+        }
       }
     })
   }
@@ -52,17 +57,52 @@ class EyeTribeBrowser extends Activity {
   val gazeListener = new EyeGaze.GazeListener {
 		def East(coord: Coord) {}
 		def West(coord: Coord) {}
-		def North(coord: Coord)     = { info("North");     scrollUp(calcNorthSpeed(coord))   }
-		def NorthEast(coord: Coord) = { info("NorthEast"); scrollUp(calcNorthSpeed(coord))   }
-		def NorthWest(coord: Coord) = { info("NorthWest"); scrollUp(calcNorthSpeed(coord))   }
-		def South(coord: Coord)     = { info("South");     scrollDown(calcSouthSpeed(coord)) }
-		def SouthEast(coord: Coord) = { info("SouthEast"); scrollDown(calcSouthSpeed(coord)) }
-		def SouthWest(coord: Coord) = { info("SouthWest"); scrollDown(calcSouthSpeed(coord)) }
-		def Center() = { info("Center") }
+		def North(coord: Coord)       { info("North");     scrollUp(calcNorthSpeed(coord));   setScreenBrightness(MAX_SCREEN_BRIGHTNESS) }
+		def NorthEast(coord: Coord)   { info("NorthEast"); scrollUp(calcNorthSpeed(coord));   setScreenBrightness(MAX_SCREEN_BRIGHTNESS) }
+		def NorthWest(coord: Coord)   { info("NorthWest"); scrollUp(calcNorthSpeed(coord));   setScreenBrightness(MAX_SCREEN_BRIGHTNESS) }
+		def South(coord: Coord)       { info("South");     scrollDown(calcSouthSpeed(coord)); setScreenBrightness(MAX_SCREEN_BRIGHTNESS) }
+		def SouthEast(coord: Coord)   { info("SouthEast"); scrollDown(calcSouthSpeed(coord)); setScreenBrightness(MAX_SCREEN_BRIGHTNESS) }
+		def SouthWest(coord: Coord)   { info("SouthWest"); scrollDown(calcSouthSpeed(coord)); setScreenBrightness(MAX_SCREEN_BRIGHTNESS) }
+		def Center()                  { info("Center"); setScreenBrightness(MAX_SCREEN_BRIGHTNESS) }
+    def notOnScreen(coord: Coord) { info("Not on screen"); setScreenBrightness(MIN_SCREEN_BRIGHTNESS) }
 		def PageUp()   {}
 		def PageDown() {}
 		def Back()     {}
 		def Dwell()    {}
+  }
+
+  def setScreenBrightness(value: Int) {
+    handler.post(new Runnable {
+      def run {
+        if(value == MAX_SCREEN_BRIGHTNESS) {
+          maxBrightness()
+        }
+        else {
+          val oldValue = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.SCREEN_BRIGHTNESS)
+
+          val newValue = Math.max(oldValue - 20, 0)
+          info("Changing screen brightness from " + oldValue +  " to " + newValue)
+
+          android.provider.Settings.System.putInt(getContentResolver(), android.provider.Settings.System.SCREEN_BRIGHTNESS, newValue)
+
+          val lp = getWindow.getAttributes
+          lp.screenBrightness = 1.0f * newValue / 255f
+          getWindow.setAttributes(lp)
+        }
+      }
+    })
+  }
+
+  private def maxBrightness() {
+    val oldValue = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.SCREEN_BRIGHTNESS)
+
+    info("Changing screen brightness from " + oldValue +  " to " + MAX_SCREEN_BRIGHTNESS)
+
+    android.provider.Settings.System.putInt(getContentResolver(), android.provider.Settings.System.SCREEN_BRIGHTNESS, MAX_SCREEN_BRIGHTNESS)
+
+    val lp = getWindow.getAttributes
+    lp.screenBrightness = 255f
+    getWindow.setAttributes(lp)
   }
 
   override def onCreate(savedInstanceState: Bundle) {

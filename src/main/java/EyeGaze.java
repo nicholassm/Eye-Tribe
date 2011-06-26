@@ -15,7 +15,7 @@ public class EyeGaze implements UDPInput.Listener {
   public final int upperMargin;
   public final int lowerMargin;
 	private List<GazeListener> listeners = new ArrayList<GazeListener>();
-  public final int SCREEN_MARGIN = 200; // pixels
+  public final int SCREEN_MARGIN = 400; // pixels
 	
 	public EyeGaze(int width, int height){
 		udpInput = new UDPInput();
@@ -52,8 +52,10 @@ public class EyeGaze implements UDPInput.Listener {
 
     Log.i(UDPInput.LOG_TAG, coord.toString());
 	
-    if(!coordinateIsInsideGazeArea(coord))
+    if(!coordinateIsInsideGazeArea(coord)) {
+      fireNotOnScreen(coord);
       return;
+    }
 
 		if (coord.x < leftMargin) {
 			if(coord.y < upperMargin) {
@@ -93,6 +95,12 @@ public class EyeGaze implements UDPInput.Listener {
     return coord.x > -SCREEN_MARGIN && coord.x < width  + SCREEN_MARGIN &&
            coord.y > -SCREEN_MARGIN && coord.y < height + SCREEN_MARGIN;
   }
+
+	private void fireNotOnScreen(Coord coord) {
+		for (GazeListener listener : listeners) {
+      listener.notOnScreen(coord);
+    }
+	}
 
 	private void fireEast(Coord coord) {
 		for (GazeListener listener : listeners) {
@@ -190,6 +198,7 @@ public class EyeGaze implements UDPInput.Listener {
 		void PageDown();
 		void Back();
 		void Dwell();
+    void notOnScreen(Coord coord);
   }
 
 	  public void addListener(GazeListener listener) {
